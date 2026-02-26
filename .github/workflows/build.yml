@@ -30,7 +30,7 @@ jobs:
           zip -r ScanDoc.ipa Payload
 
       - name: Upload IPA
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ScanDoc
           path: ScanDoc.ipa
