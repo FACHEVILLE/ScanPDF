@@ -3,12 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:cunning_document_scanner/cunning_document_scanner.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:permission_handler/permission_handler.dart';
 
 class ScannerPage extends StatelessWidget {
   const ScannerPage({super.key});
 
-  Future<void> _scanDocument(BuildContext context) async {
+Future<void> _scanDocument(BuildContext context) async {
     try {
+      final status = await Permission.camera.request();
+      if (!status.isGranted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Permission caméra refusée')),
+        );
+        return;
+      }
+
       final pictures = await CunningDocumentScanner.getPictures(noOfPages: 10, isGalleryImportAllowed: true);
       if (pictures == null || pictures.isEmpty) return;
 
