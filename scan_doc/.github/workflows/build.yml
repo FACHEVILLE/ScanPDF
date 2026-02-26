@@ -1,0 +1,36 @@
+name: Build iOS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+
+      - name: Install dependencies
+        working-directory: scan_doc
+        run: flutter pub get
+
+      - name: Build iOS (no codesign)
+        working-directory: scan_doc
+        run: flutter build ios --release --no-codesign
+
+      - name: Create IPA
+        run: |
+          mkdir -p Payload
+          cp -r scan_doc/build/ios/iphoneos/Runner.app Payload/
+          zip -r ScanDoc.ipa Payload
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v3
+        with:
+          name: ScanDoc
+          path: ScanDoc.ipa
