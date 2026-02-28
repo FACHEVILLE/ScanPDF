@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class DocumentsPage extends StatefulWidget {
   const DocumentsPage({super.key});
@@ -32,6 +33,64 @@ class _DocumentsPageState extends State<DocumentsPage> {
     _loadDocuments();
   }
 
+  Future<void> _renameDocument(File file) async {
+    final name = file.path.split('/').last.replaceAll('.pdf', '');
+    final controller = TextEditingController(text: name);
+    final newName = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Renommer'),
+        content: TextField(controller: controller, autofocus: true),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, null), child: const Text('Annuler')),
+          ElevatedButton(onPressed: () => Navigator.pop(context, controller.text), child: const Text('OK')),
+        ],
+      ),
+    );
+    if (newName == null || newName.isEmpty) return;
+    final dir = file.parent;
+    await file.rename('${dir.path}/$newName.pdf');
+    _loadDocuments();
+  }
+
+  void _showOptions(BuildContext context, File file) {
+    final name = file.path.split('/').last;
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.share),
+              title: const Text('Partager'),
+              onTap: () {
+                Navigator.pop(context);
+                Share.shareXFiles([XFile(file.path)], text: name);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.drive_file_rename_outline),
+              title: const Text('Renommer'),
+              onTap: () {
+                Navigator.pop(context);
+                _renameDocument(file);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+              onTap: () {
+                Navigator.pop(context);
+                _deleteDocument(file);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,10 +105,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
                 return ListTile(
                   leading: const Icon(Icons.picture_as_pdf, color: Colors.red),
                   title: Text(name),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () => _deleteDocument(file),
-                  ),
+                  onLongPress: () => _showOptions(context, file),
                 );
               },
             ),

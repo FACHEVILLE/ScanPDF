@@ -8,7 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 class ScannerPage extends StatelessWidget {
   const ScannerPage({super.key});
 
-Future<void> _scanDocument(BuildContext context) async {
+  Future<void> _scanDocument(BuildContext context) async {
     try {
       final status = await Permission.camera.request();
       if (!status.isGranted) {
@@ -18,8 +18,36 @@ Future<void> _scanDocument(BuildContext context) async {
         return;
       }
 
-      final pictures = await CunningDocumentScanner.getPictures(noOfPages: 10, isGalleryImportAllowed: true);
+      final pictures = await CunningDocumentScanner.getPictures(
+          noOfPages: 10, isGalleryImportAllowed: true);
       if (pictures == null || pictures.isEmpty) return;
+
+      // Demander le nom du fichier
+      final nameController = TextEditingController(
+          text: 'scan_${DateTime.now().millisecondsSinceEpoch}');
+      final fileName = await showDialog<String>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Nommer le document'),
+          content: TextField(
+            controller: nameController,
+            autofocus: true,
+            decoration: const InputDecoration(hintText: 'Nom du fichier'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, null),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, nameController.text),
+              child: const Text('Sauvegarder'),
+            ),
+          ],
+        ),
+      );
+
+      if (fileName == null || fileName.isEmpty) return;
 
       final pdf = pw.Document();
       for (final path in pictures) {
@@ -28,12 +56,11 @@ Future<void> _scanDocument(BuildContext context) async {
       }
 
       final dir = await getApplicationDocumentsDirectory();
-      final fileName = 'scan_${DateTime.now().millisecondsSinceEpoch}.pdf';
-      final file = File('${dir.path}/$fileName');
+      final file = File('${dir.path}/$fileName.pdf');
       await file.writeAsBytes(await pdf.save());
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Document sauvegardé : $fileName')),
+        SnackBar(content: Text('Document sauvegardé : $fileName.pdf')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
