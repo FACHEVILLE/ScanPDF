@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:open_filex/open_filex.dart';
 
 class DocumentsPage extends StatefulWidget {
   const DocumentsPage({super.key});
@@ -105,6 +106,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
                 return ListTile(
                   leading: const Icon(Icons.picture_as_pdf, color: Colors.red),
                   title: Text(name),
+                  onTap: () => OpenFilex.open(file.path),
                   onLongPress: () => _showOptions(context, file),
                 );
               },
